@@ -1,16 +1,15 @@
 from django.urls import path, include
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
+    TokenObtainPairView
 )
 from .views import ListItem, DetailItemView, CreateItem, DestroyItem, UpdateItem,\
-    CreateUserAPI
+    CreateUserAPI, LoginUserAPIView
 
 urlpatterns = [
     path('', ListItem.as_view(), name="list"),
-    path('token/auth/', TokenObtainPairView.as_view()),
-    path('token/refresh/', TokenRefreshView.as_view()),
+    path('login/', TokenObtainPairView.as_view(), name='login'),
     path('register/', CreateUserAPI.as_view(), name='register'),
+    # path('login/', LoginUserAPIView.as_view(), name='login'),
     path('create/', CreateItem.as_view(), name="create"),
     path('<int:pk>/', include([
         path('detail/', DetailItemView.as_view(), name="detail"),

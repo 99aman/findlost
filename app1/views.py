@@ -18,12 +18,14 @@ from rest_framework.generics import (
 from django.contrib.auth import get_user_model
 from .utility import IsOwner, CustomLimitOffsetPagination, CustomPageNumberPagination, IfAuthenticatedDoNothing
 from .serializers import (
-    LostOrFoundSerializer,
-    LostOrFoundCreate,
-    LostOrFoundUpdate,
-    UserCreateSerializer
+    LostOrFoundListSerializer,
+    LostOrFoundDetailSerializer,
+    LostOrFoundCreateSerializer,
+    LostOrFoundUpdateSerializer,
+    UserCreateSerializer,
+    UserLoginSerializer
 )
-from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny
 from .models import LostOrFound
 
 # Create your views here.
@@ -31,26 +33,27 @@ from .models import LostOrFound
 User = get_user_model()
 
 class ListItem(ListAPIView):
-    serializer_class = LostOrFoundSerializer
-    # permission_classes = [IsAuthenticated]
+    serializer_class = LostOrFoundListSerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [SearchFilter]
-    search_fields = ['item_name', 'description']
+    search_fields = ['item_name', 'description', 'pin_number']
     pagination_class = CustomPageNumberPagination
     def get_queryset(self, *args, **kwargs):
-        item = LostOrFound.objects.order_by('-id').select_related('name')
+        item = LostOrFound.objects.order_by('-id').select_related('name').filter(select='Found')
         query = self.request.GET.get('q')
         if query:
-            item = item.filter(Q(item_name__icontains=query) | Q(description__icontains=query)).distinct()
+            item = item.filter(Q(item_name__icontains=query) | Q(description__icontains=query) | Q(pin_number__icontains=query)).distinct()
         return item
 
 class DetailItemView(RetrieveAPIView):
     queryset = LostOrFound.objects.all()
-    serializer_class = LostOrFoundSerializer
+    serializer_class = LostOrFoundDetailSerializer
+    permission_classes = [IsAuthenticated]
     lookup_field = 'pk'
 
 class CreateItem(CreateAPIView):
     queryset = LostOrFound.objects.all()
-    serializer_class = LostOrFoundCreate
+    serializer_class = LostOrFoundCreateSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -58,14 +61,14 @@ class CreateItem(CreateAPIView):
 
 class DestroyItem(RetrieveDestroyAPIView):
     queryset = LostOrFound.objects.all()
-    serializer_class = LostOrFoundSerializer
+    serializer_class = LostOrFoundListSerializer
     lookup_field = 'pk'
     permission_classes = [IsAuthenticated, IsOwner]
 
 
 class UpdateItem(RetrieveUpdateAPIView):
     queryset = LostOrFound.objects.all()
-    serializer_class = LostOrFoundUpdate
+    serializer_class = LostOrFoundUpdateSerializer
     lookup_field = 'pk'
     permission_classes = [IsAuthenticated, IsOwner]
 
@@ -92,12 +95,18 @@ class CreateUserAPI(CreateAPIView):
             user = User(username=user, first_name=first_name,last_name=last_name,email=email)
             user.set_password(password)
             user.save()
-            return HttpResponseRedirect(redirect_to=f'http://{host_name}/api/')
+            return HttpResponseRedirect(redirect_to=f'http://{host_name}/api/login/')
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-    # def auth_user(self, request, user, password):
-    #     user = auth.authenticate(username=user, password=password)
-    #     if user is not None:
-    #         auth.login(request, user)
-    #         return True
-    #     return False
+
+class LoginUserAPIView(APIView):
+    serializer_class = UserLoginSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        serialize_data = UserLoginSerializer(data=data)
+        if serialize_data.is_valid(raise_exception=True):
+            new_data = serialize_data.data
+            return Response(new_data, status=HTTP_200_OK)
+        return Response(serialize_data.errors, status=HTTP_400_BAD_REQUEST)

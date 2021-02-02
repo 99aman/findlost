@@ -55,7 +55,7 @@ class Base64ImageField(serializers.ImageField):
 
         return extension
 
-class LostOrFoundSerializer(serializers.ModelSerializer):
+class LostOrFoundListSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='detail', lookup_field='pk'
     )
@@ -66,7 +66,7 @@ class LostOrFoundSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['url','name', 'item_name', 'item_image', 'category', 'description', 'phone_number']
+        fields = ['url','name', 'item_name', 'item_image', 'select', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
@@ -78,13 +78,50 @@ class LostOrFoundSerializer(serializers.ModelSerializer):
             image = None
         return image
 
-class LostOrFoundCreate(serializers.ModelSerializer):
-    CHOICE = {'Lost':'lost', 'Found':'found'}
-    category = serializers.ChoiceField(choices=CHOICE)
+class LostOrFoundDetailSerializer(serializers.ModelSerializer):
+    # delete_url = serializers.HyperlinkedIdentityField(
+    #     view_name='detail', lookup_field='pk'
+    # )
+    name = serializers.SerializerMethodField()
+    item_image = serializers.SerializerMethodField()
+    class Meta:
+        model = LostOrFound
+        fields = ['name', 'item_name', 'item_image', 'phone_number', 'pin_number', 'category', 'description']
+
+    def get_name(self, obj):
+        return f'{obj.name}'
+
+    def get_item_image(self, obj):
+        try:
+            image = obj.item_image.url
+        except:
+            image = None
+        return image
+
+
+class LostOrFoundCreateSerializer(serializers.ModelSerializer):
+    SELECT = {'Lost':'lost', 'Found':'found'}
+    CATEGORY = {
+        'Bag':'Bag',
+        'Certificate':'Certificate',
+        'Charger':'Charger',
+        'Bank Card':'Bank Card',
+        'Jwellary':'Jwellary product',
+        'Laptop':'Laptop',
+        'Phone':'Phone',
+        'Trolly':'Trolly',
+        'Wallet':'Wallet',
+        'Other':'Other'
+    }
+
+    category = serializers.ChoiceField(choices=CATEGORY)
+    select = serializers.ChoiceField(choices=SELECT)
+
+
     item_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
     class Meta:
         model = LostOrFound
-        fields = ['item_name', 'item_image', 'phone_number', 'category', 'description']
+        fields = ['item_name', 'item_image', 'select', 'category', 'phone_number', 'pin_number', 'description']
 
     def get_item_image(self, instance):
         return (instance.item_image.url if instance.item_image else None)
@@ -96,7 +133,7 @@ data =  {"item_image":"",
     "phone_number":"44444444"
     }
 
-class LostOrFoundUpdate(serializers.ModelSerializer):
+class LostOrFoundUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = LostOrFound
         fields = ['phone_number', 'description']
@@ -119,3 +156,25 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError('This email already exists')
         return value
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(label='Email/Username')
+    class Meta:
+        model = User
+        fields = ['email', 'password']
+
+        extra_kwargs = {'password':{'write_only':True}}
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+        if '@gmail.com' in email:
+            username = User.objects.filter(email=email).first()
+        elif email:
+            username = User.objects.filter(username=email).first()
+        else:
+            raise serializers.ValidationError('Bad credentials.Try again!')
+        if not username.check_password(password):
+            raise serializers.ValidationError('Bad credentials.Try again!')
+        return data
