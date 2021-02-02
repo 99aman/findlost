@@ -58,7 +58,7 @@ ROOT_URLCONF = 'found_lost.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR, 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -145,5 +145,5 @@ REST_FRAMEWORK = {
 
 from datetime import timedelta
 SIMPLE_JWT = {
-'ACCESS_TOKEN_LIFETIME': timedelta(days=10)
+'ACCESS_TOKEN_LIFETIME': timedelta(days=100)
 }

@@ -39,11 +39,9 @@ class ListItem(ListAPIView):
     pagination_class = CustomPageNumberPagination
     def get_queryset(self, *args, **kwargs):
         item = LostOrFound.objects.order_by('-id').select_related('name')
-        query = self.request.GET.get('q')
+        query = self.request.GET.get('search')
         if query:
-            item = item.filter(select='Found')
-            print(item)
-            item = item.filter(Q(item_name__icontains=query) | Q(description__icontains=query) | Q(pin_number__icontains=query)).distinct()
+            item = item.filter(Q(item_name__icontains=query) | Q(description__icontains=query) | Q(pin_number__icontains=query), select='Found').distinct()
         return item
 
 class DetailItemView(RetrieveAPIView):
