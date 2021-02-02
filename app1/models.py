@@ -13,11 +13,7 @@ class LostOrFound(models.Model):
     select = models.CharField(max_length=10, blank=True, null=True)
     category = models.CharField(max_length=30, blank=True, null=True)
     description = models.TextField(max_length=500, help_text='write in short what you lost/found')
-    claimed = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.item_name}'
 
-class ClaimOnProduct(models.Model):
-    name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-    claim_on = models.ManyToManyField(LostOrFound, blank=True)

@@ -139,12 +139,11 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
     )
 }
 
 from datetime import timedelta
 SIMPLE_JWT = {
-'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
-'REFRESH_TOKEN_LIFETIME': timedelta(days=20)
+'ACCESS_TOKEN_LIFETIME': timedelta(days=10)
 }

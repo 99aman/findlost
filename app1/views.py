@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.contrib import auth
 from django.http import HttpResponseRedirect
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.response import Response
@@ -39,9 +38,11 @@ class ListItem(ListAPIView):
     search_fields = ['item_name', 'description', 'pin_number']
     pagination_class = CustomPageNumberPagination
     def get_queryset(self, *args, **kwargs):
-        item = LostOrFound.objects.order_by('-id').select_related('name').filter(select='Found')
+        item = LostOrFound.objects.order_by('-id').select_related('name')
         query = self.request.GET.get('q')
         if query:
+            item = item.filter(select='Found')
+            print(item)
             item = item.filter(Q(item_name__icontains=query) | Q(description__icontains=query) | Q(pin_number__icontains=query)).distinct()
         return item
 

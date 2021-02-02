@@ -56,9 +56,9 @@ class Base64ImageField(serializers.ImageField):
         return extension
 
 class LostOrFoundListSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name='detail', lookup_field='pk'
-    )
+    # url = serializers.HyperlinkedIdentityField(
+    #     view_name='detail', lookup_field='pk'
+    # )
     item_image = serializers.SerializerMethodField()
     # delete_url = serializers.HyperlinkedIdentityField(
     #     view_name='detail', lookup_field='pk'
@@ -66,7 +66,7 @@ class LostOrFoundListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['url','name', 'item_name', 'item_image', 'select', 'description']
+        fields = ['id','name', 'item_name', 'item_image', 'select', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
@@ -86,7 +86,7 @@ class LostOrFoundDetailSerializer(serializers.ModelSerializer):
     item_image = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['name', 'item_name', 'item_image', 'phone_number', 'pin_number', 'category', 'description']
+        fields = ['id', 'name', 'item_name', 'item_image', 'phone_number', 'pin_number', 'category', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
@@ -134,9 +134,10 @@ data =  {"item_image":"",
     }
 
 class LostOrFoundUpdateSerializer(serializers.ModelSerializer):
+    item_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
     class Meta:
         model = LostOrFound
-        fields = ['phone_number', 'description']
+        fields = ['item_image', 'phone_number', 'description']
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
