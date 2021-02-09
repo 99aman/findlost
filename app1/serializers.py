@@ -86,7 +86,7 @@ class LostOrFoundDetailSerializer(serializers.ModelSerializer):
     item_image = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['id', 'name', 'item_name', 'item_image', 'phone_number', 'pin_number', 'category', 'description']
+        fields = ['id', 'name', 'item_name', 'item_image', 'phone_number', 'pin_number','latitude', 'longitude', 'category', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
@@ -101,27 +101,56 @@ class LostOrFoundDetailSerializer(serializers.ModelSerializer):
 
 class LostOrFoundCreateSerializer(serializers.ModelSerializer):
     SELECT = {'Lost':'lost', 'Found':'found'}
+
+    c_id = {'School certificate':'School certificate',
+        'College certificate':'College certificate',
+        'Company certificate':'Company certificate',
+        'College ID':'College ID',
+        'Other':'Other'
+        }
+    e_itm = {
+        'Mobile/Phone':'Mobile/Phone',
+        'Laptop':'Laptop',
+        'Charger':'Charger',
+        'Trimmer':'Trimmer',
+        'Wifi dongle':'Wifi dongle',
+        'Other':'Other'
+    }
+    bg = {
+        'School bag':'School bag',
+        'Trolly bag':'Trolly bag',
+        'Ladies purse/bag':'Ladies purse/bag',
+        'Other':'Other'
+    }
+    jw_itm = {
+        'Necklace':'Necklace',
+        'Bracelet':'Bracelet',
+        'Ring':'Ring',
+        'Earrings':'Earrings',
+        'Anklet':'Anklet',
+        'Toe ring':'Toe ring',
+        'Locket':'Locket'
+    }
     CATEGORY = {
         'Bag':'Bag',
-        'Certificate':'Certificate',
-        'Charger':'Charger',
-        'Bank Card':'Bank Card',
-        'Jwellary':'Jwellary product',
-        'Laptop':'Laptop',
-        'Phone':'Phone',
+        'Certificate and ID':'Certificate and ID',
+        'Bank stuff':'Bank stuff',
+        'Electronic item':'Electronic item',
+        'Jwellary item':'Jwellary item',
         'Trolly':'Trolly',
         'Wallet':'Wallet',
         'Other':'Other'
     }
 
     category = serializers.ChoiceField(choices=CATEGORY)
+    
     select = serializers.ChoiceField(choices=SELECT)
 
 
     item_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
     class Meta:
         model = LostOrFound
-        fields = ['item_name', 'item_image', 'select', 'category', 'phone_number', 'pin_number', 'description']
+        fields = ['item_name', 'item_image', 'select', 'category', 'phone_number', 'pin_number','latitude', 'longitude', 'description']
 
     def get_item_image(self, instance):
         return (instance.item_image.url if instance.item_image else None)
