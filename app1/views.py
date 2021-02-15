@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from django.db.models import Q
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.pagination import LimitOffsetPagination, PageNumberPagination
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.generics import (
     ListAPIView,
     RetrieveAPIView,
@@ -21,15 +22,22 @@ from .serializers import (
     LostOrFoundDetailSerializer,
     LostOrFoundCreateSerializer,
     LostOrFoundUpdateSerializer,
+    RetreiveCategorySerializer,
+    UploadImageSerializer,
     UserCreateSerializer,
     UserLoginSerializer
 )
 from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny
-from .models import LostOrFound
+from .models import LostOrFound, Category, Subcategory, UploadImage
 
 # Create your views here.
 
 User = get_user_model()
+
+class CreateRetreiveApiView(RetrieveUpdateAPIView):
+    queryset = LostOrFound.objects.all()
+    serializer_class = RetreiveCategorySerializer
+    permission_classes = [IsAuthenticated]
 
 class ListItem(ListAPIView):
     serializer_class = LostOrFoundListSerializer
@@ -70,6 +78,18 @@ class UpdateItem(RetrieveUpdateAPIView):
     serializer_class = LostOrFoundUpdateSerializer
     lookup_field = 'pk'
     permission_classes = [IsAuthenticated, IsOwner]
+
+class UploadImageApiView(CreateAPIView, ListAPIView):
+    serializer_class = UploadImageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        obj = LostOrFound.objects.filter(id=self.kwargs['pk']).first()
+        return obj.uploadimage_set.all()
+
+    
+    def perform_create(self, serializer, *args, **kwargs):
+        serializer.save(lostfound=LostOrFound.objects.filter(id=self.kwargs['pk']).first())
 
 class CreateUserAPI(CreateAPIView):
     queryset = User.objects.all()

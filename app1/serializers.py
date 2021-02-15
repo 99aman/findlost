@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LostOrFound
+from .models import LostOrFound, UploadImage, Category, Subcategory
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
@@ -29,7 +29,7 @@ class Base64ImageField(serializers.ImageField):
             if 'data:' in data and ';base64,' in data:
                 # Break out the header from the base64 content
                 header, data = data.split(';base64,')
-
+            
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(data)
@@ -56,44 +56,51 @@ class Base64ImageField(serializers.ImageField):
         return extension
 
 class LostOrFoundListSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(
-    #     view_name='detail', lookup_field='pk'
-    # )
-    item_image = serializers.SerializerMethodField()
-    # delete_url = serializers.HyperlinkedIdentityField(
-    #     view_name='detail', lookup_field='pk'
-    # )
+    upload_image = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['id','name', 'item_name', 'item_image', 'select', 'description']
+        fields = ['id','name', 'item_name', 'upload_image', 'select', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
 
-    def get_item_image(self, obj):
+    def get_upload_image(self, obj):
         try:
-            image = obj.item_image.url
+            image = obj.uploadimage_set.all().first().upload_image.url
         except:
             image = None
         return image
 
+class UploadImageSerializer(serializers.ModelSerializer):
+    upload_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
+       
+    class Meta:
+        model=UploadImage
+        fields = ['id', 'upload_image']
+
+
 class LostOrFoundDetailSerializer(serializers.ModelSerializer):
-    # delete_url = serializers.HyperlinkedIdentityField(
-    #     view_name='detail', lookup_field='pk'
-    # )
     name = serializers.SerializerMethodField()
-    item_image = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['id', 'name', 'item_name', 'item_image', 'phone_number', 'pin_number','latitude', 'longitude', 'category', 'description']
+        fields = ['id', 'name', 'item_name', 'select', 'phone_number', 'pin_code','latitude', 'longitude', 'category', 'subcategory', 'description', 'images']
 
     def get_name(self, obj):
         return f'{obj.name}'
 
-    def get_item_image(self, obj):
+    def get_images(self, obj):
         try:
-            image = obj.item_image.url
+            image = UploadImageSerializer(obj.uploadimage_set, many=True).data
+            # im = dict(image[0])
+            # d = {}
+            # d['id'] = im['id']
+            # for i in range(len(im)-1):
+            #     string = f'upload_image_{i + 1}'
+            #     if im[string] is not None:
+            #         d[string] = im[string]
+            # image = d       
         except:
             image = None
         return image
@@ -101,75 +108,72 @@ class LostOrFoundDetailSerializer(serializers.ModelSerializer):
 
 class LostOrFoundCreateSerializer(serializers.ModelSerializer):
     SELECT = {'Lost':'lost', 'Found':'found'}
-
-    c_id = {'School certificate':'School certificate',
-        'College certificate':'College certificate',
-        'Company certificate':'Company certificate',
-        'College ID':'College ID',
-        'Other':'Other'
-        }
-    e_itm = {
-        'Mobile/Phone':'Mobile/Phone',
-        'Laptop':'Laptop',
-        'Charger':'Charger',
-        'Trimmer':'Trimmer',
-        'Wifi dongle':'Wifi dongle',
-        'Other':'Other'
-    }
-    bg = {
-        'School bag':'School bag',
-        'Trolly bag':'Trolly bag',
-        'Ladies purse/bag':'Ladies purse/bag',
-        'Other':'Other'
-    }
-    jw_itm = {
-        'Necklace':'Necklace',
-        'Bracelet':'Bracelet',
-        'Ring':'Ring',
-        'Earrings':'Earrings',
-        'Anklet':'Anklet',
-        'Toe ring':'Toe ring',
-        'Locket':'Locket'
-    }
-    CATEGORY = {
-        'Bag':'Bag',
-        'Certificate and ID':'Certificate and ID',
-        'Bank stuff':'Bank stuff',
-        'Electronic item':'Electronic item',
-        'Jwellary item':'Jwellary item',
-        'Trolly':'Trolly',
-        'Wallet':'Wallet',
-        'Other':'Other'
-    }
-
-    category = serializers.ChoiceField(choices=CATEGORY)
     
     select = serializers.ChoiceField(choices=SELECT)
-
-
-    item_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
     class Meta:
         model = LostOrFound
-        fields = ['item_name', 'item_image', 'select', 'category', 'phone_number', 'pin_number','latitude', 'longitude', 'description']
+        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code']
 
-    def get_item_image(self, instance):
-        return (instance.item_image.url if instance.item_image else None)
+class CategorySerializer(serializers.ModelSerializer):
 
-data =  {"item_image":"",
-    "item_name":"something",
-    "description":"this is description",
-    "category":"Found",
-    "phone_number":"44444444"
-    }
+    class Meta:
+        model = Category
+        fields = ['id', 'category_name']
+
+
+class SubcategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subcategory
+        fields = ['id', 'subcategory_name', 'category_id']
+
+class RetreiveCategorySerializer(serializers.ModelSerializer):
+
+    category = serializers.SerializerMethodField()
+    subcategory = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['id', 'category', 'subcategory']
+
+    def get_category(self, obj):
+        cat = CategorySerializer(Category.objects.all(), many=True).data
+        return cat
+
+    def get_subcategory(self, obj):
+        subcat = SubcategorySerializer(Subcategory.objects.all(), many=True).data
+        return subcat
 
 class LostOrFoundUpdateSerializer(serializers.ModelSerializer):
-    item_image = Base64ImageField(allow_null=True, required=False, use_url=True, allow_empty_file=True)
+    upload_image = serializers.SerializerMethodField()
+    choose = serializers.SerializerMethodField()
+    # subcategory = serializers.SerializerMethodField()
+    
     class Meta:
         model = LostOrFound
-        fields = ['item_image', 'phone_number', 'description']
+        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code','latitude', 'longitude', 'description', 'upload_image', 'category', 'subcategory', 'choose']
 
+    def get_upload_image(self, obj):
+        try:
+            image = UploadImageSerializer(obj.uploadimage_set, many=True).data
+            # im = dict(image[0])
+            # d = {}
+            # d['id'] = im['id']
+            # for i in range(len(im)-1):
+            #     string = f'upload_image_{i + 1}'
+            #     if im[string] is not None:
+            #         d[string] = im[string]
+            # image = d
+        except:
+            image = None
+        return image
+
+    def get_choose(self, obj):
+        b = Category.objects.all()[0]
+        return RetreiveCategorySerializer([b], many=True).data
 
 class UserCreateSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'username', 'email', 'password']

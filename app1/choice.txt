@@ -1,0 +1,41 @@
+
+    c_id = (
+        (1,'School certificate'),
+        (2, 'College certificate'),
+        (3, 'Company certificate'),
+        (4, 'College ID'),
+        (5, 'Other')
+        )
+    e_itm = (
+        (20, 'Mobile/Phone'),
+        (21, 'Laptop'),
+        (22, 'Charger'),
+        (23, 'Trimmer'),
+        (24, 'Wifi dongle'),
+        (25, 'Other')
+    )
+    bg = (
+        (11, 'School bag'),
+        (12, 'Trolly bag'),
+        (13, 'Ladies purse/bag'),
+        (14, 'Other')
+    )
+    jw_itm = (
+        (30, 'Necklace'),
+        (31, 'Bracelet'),
+        (32, 'Ring'),
+        (33, 'Earrings'),
+        (34, 'Anklet'),
+        (35, 'Toe ring'),
+        (36, 'Locket')
+    )
+    CATEGORY = (
+        ('Bag', (bg)),
+        ('Certificate and ID', (c_id)),
+        ('Bank stuff', 'Bank stuff'),
+        ('Electronic item',(e_itm)),
+        ('Jwellary item', (jw_itm)),
+        ('Trolly', (40, 'Trolly')),
+        ('Wallet', (50, 'Wallet')),
+        ('Other', (60, 'Other'))
+    )
