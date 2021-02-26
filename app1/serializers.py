@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import LostOrFound, UploadImage, Category, Subcategory
+from .models import LostOrFound, UploadImage, Category, Subcategory, Notification
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 
@@ -60,7 +60,7 @@ class LostOrFoundListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     class Meta:
         model = LostOrFound
-        fields = ['id','name', 'item_name', 'upload_image', 'select', 'description']
+        fields = ['id','name', 'item_name', 'upload_image', 'select', 'claimed', 'description']
 
     def get_name(self, obj):
         return f'{obj.name}'
@@ -112,7 +112,7 @@ class LostOrFoundCreateSerializer(serializers.ModelSerializer):
     select = serializers.ChoiceField(choices=SELECT)
     class Meta:
         model = LostOrFound
-        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code']
+        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code', 'latitude', 'longitude', 'description', 'category', 'subcategory']
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -122,10 +122,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
+    subcategory_id = serializers.CharField(source='id')
 
     class Meta:
         model = Subcategory
-        fields = ['id', 'subcategory_name', 'category_id']
+        fields = ['subcategory_id', 'subcategory_name', 'category_id']
+
 
 class RetreiveCategorySerializer(serializers.ModelSerializer):
 
@@ -146,12 +148,12 @@ class RetreiveCategorySerializer(serializers.ModelSerializer):
 
 class LostOrFoundUpdateSerializer(serializers.ModelSerializer):
     upload_image = serializers.SerializerMethodField()
-    choose = serializers.SerializerMethodField()
+    master_data = serializers.SerializerMethodField()
     # subcategory = serializers.SerializerMethodField()
     
     class Meta:
         model = LostOrFound
-        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code','latitude', 'longitude', 'description', 'upload_image', 'category', 'subcategory', 'choose']
+        fields = ['id', 'item_name', 'select', 'phone_number', 'pin_code','latitude', 'longitude', 'description', 'upload_image', 'category', 'subcategory', 'master_data']
 
     def get_upload_image(self, obj):
         try:
@@ -168,9 +170,16 @@ class LostOrFoundUpdateSerializer(serializers.ModelSerializer):
             image = None
         return image
 
-    def get_choose(self, obj):
+    def get_master_data(self, obj):
         b = Category.objects.all()[0]
-        return RetreiveCategorySerializer([b], many=True).data
+        return RetreiveCategorySerializer({b}, many=True).data
+
+class NotificationSerializer(serializers.ModelSerializer):
+    item_id = serializers.CharField(source='claimed_on_id', read_only=True)
+    class Meta:
+        model = Notification
+        fields = ['id', 'message', 'item_id']
+
 
 class UserCreateSerializer(serializers.ModelSerializer):
 

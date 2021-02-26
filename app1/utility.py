@@ -19,4 +19,4 @@ class CustomLimitOffsetPagination(LimitOffsetPagination):
     max_limit = 4
 
 class CustomPageNumberPagination(PageNumberPagination):
-    page_size = 6
+    page_size = 4
