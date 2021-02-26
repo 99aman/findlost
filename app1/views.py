@@ -59,7 +59,7 @@ class NotificationApiView(ListAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
     def get_queryset(self, *args, **kwargs):
         lf = LostOrFound.objects.filter(name=self.request.user)
-        qs = Notification.objects.filter(claimed_on__in=lf)
+        qs = Notification.objects.filter(claimed_on__in=lf).order_by('-id')
         return qs
 
 class MasterDataApiView(ListAPIView):
